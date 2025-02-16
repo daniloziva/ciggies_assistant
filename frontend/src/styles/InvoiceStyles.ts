@@ -359,12 +359,83 @@ export const ListTableCell = styled.td`
   }
 `;
 
-export const StatusBadge = styled.span<{ status: 'processed' | 'pending' }>`
+export const StatusBadge = styled.span<{ status: 'processed' | 'pending' | 'cancelled' }>`
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 500;
-  ${props => props.status === 'processed' 
-    ? 'background: #d1fae5; color: #047857;'
-    : 'background: #fef3c7; color: #b45309;'}
-`; 
+  ${props => {
+    switch (props.status) {
+      case 'processed':
+        return 'background: #d1fae5; color: #047857;'; // green
+      case 'cancelled':
+        return 'background: #fee2e2; color: #dc2626;'; // red
+      default:
+        return 'background: #fef3c7; color: #b45309;'; // yellow
+    }
+  }}
+`;
+
+export const LargeStatusBadge = styled.span<{ status: 'processed' | 'pending' | 'cancelled' }>`
+  padding: 0.5rem 1.5rem;
+  border-radius: 9999px;
+  font-size: 1rem;
+  font-weight: 500;
+  display: inline-block;
+  ${props => {
+    switch (props.status) {
+      case 'processed':
+        return 'background: #d1fae5; color: #047857;'; // green
+      case 'cancelled':
+        return 'background: #fee2e2; color: #dc2626;'; // red
+      default:
+        return 'background: #fef3c7; color: #b45309;'; // yellow
+    }
+  }}
+`;
+
+export const MenuContainer = styled.div`
+  position: relative;
+  display: inline-block;
+`;
+
+export const MenuButton = styled.button`
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: #6b7280;
+  &:hover {
+    color: #374151;
+  }
+`;
+
+export const MenuDropdown = styled.div`
+  position: absolute;
+  left: 0;
+  top: 100%;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 10;
+`;
+
+export const MenuItem = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  white-space: nowrap;
+  
+  &:hover {
+    background: #fee2e2;
+  }
+`;
+

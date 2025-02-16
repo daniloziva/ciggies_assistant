@@ -1,17 +1,28 @@
 export interface InvoiceHeader {
-  Id?: string;
-  InvoiceNumber: string;
-  VendorName: string;
-  InvoiceDate: string;
-  TotalAmount: number;
-  IsProcessed: boolean;
+  id: string;
+  invoicenumber: string;
+  vendorno: string;
+  vendorname: string;
+  invoicedate: string;
+  totalamount: number;
+  isprocessed: boolean;
+  registrationno: string;
+  vatno: string;
+  status: string;
 }
 
 export interface InvoiceLine {
-  Id?: string;
-  HeaderId: string;
-  Description: string;
-  Quantity: number;
-  UnitPrice: number;
-  LineAmount: number;
-} 
+  header_id: string;
+  lineno: number;
+  no: string;
+  description: string;
+  qty: number;
+  price: number;
+  lineamount: number;
+  discout: number;
+  uom: string;
+  vatpercent: number;
+  no_mapped: string | null;
+  desc_mapped: string | null;
+  vatamount: number;
+}

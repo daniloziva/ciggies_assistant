@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const Supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
 
-export const storeInvoice = async (req, res) => {
+export const storeInvoice = async (req: any, res: any) => {
   const { Header, Lines } = req.body;
   
   try {
@@ -16,7 +16,7 @@ export const storeInvoice = async (req, res) => {
     if (HeaderError) throw HeaderError;
 
     // Insert lines
-    const LinesWithHeaderId = Lines.map(line => ({
+    const LinesWithHeaderId = Lines.map((line: any) => ({
       ...line,
       HeaderId: HeaderData.Id
     }));
@@ -28,12 +28,12 @@ export const storeInvoice = async (req, res) => {
     if (LinesError) throw LinesError;
 
     res.status(200).json({ success: true, data: HeaderData });
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
 };
 
-export const markAsProcessed = async (req, res) => {
+export const markAsProcessed = async (req: any, res: any) => {
   const { InvoiceId } = req.params;
 
   try {
@@ -45,7 +45,7 @@ export const markAsProcessed = async (req, res) => {
     if (error) throw error;
 
     res.status(200).json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
 }; 

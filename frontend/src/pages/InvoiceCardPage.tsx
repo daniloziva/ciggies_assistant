@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '../services/supabaseClient';
-import { InvoiceHeader, InvoiceLine } from '../types/invoice';
+import { api } from '../services/api';
+import { InvoiceHeader, InvoiceLine } from '../../../backend/src/types/invoice';
 import {
   InvoiceContainer,
   BillingSection,
@@ -27,11 +27,12 @@ import {
   TableRow,
   DeleteCell,
   AddLineButton,
-  PageContainer
+  PageContainer,
+  LargeStatusBadge
 } from '../styles/InvoiceStyles';
-import { FiTrash2, FiPlus } from 'react-icons/fi';
+import { FiTrash2, FiPlus, FiX } from 'react-icons/fi';
 
-export const InvoiceDetailPage = () => {
+export const InvoiceCardPage = () => {
   const { Id } = useParams();
   const Navigate = useNavigate();
   const [Invoice, setInvoice] = useState<InvoiceHeader | null>(null);
@@ -41,31 +42,18 @@ export const InvoiceDetailPage = () => {
 
   useEffect(() => {
     if (Id) {
-      fetchInvoiceDetails(Id);
+      fetchInvoice();
     }
   }, [Id]);
 
-  const fetchInvoiceDetails = async (InvoiceId: string) => {
+  const fetchInvoice = async () => {
     try {
       setIsLoading(true);
-      const { data: HeaderData, error: HeaderError } = await supabase
-        .from('invoice_header')
-        .select('*')
-        .eq('id', InvoiceId)
-        .single();
-
-      if (HeaderError) throw HeaderError;
+      const { HeaderData, LinesData } = await api.getInvoice(Id!);
       setInvoice(HeaderData);
-
-      const { data: LinesData, error: LinesError } = await supabase
-        .from('invoice_line')
-        .select('*')
-        .eq('header_id', InvoiceId);
-
-      if (LinesError) throw LinesError;
-      setInvoiceLines(LinesData || []);
+      setInvoiceLines(LinesData);
     } catch (error) {
-      console.error('Error fetching invoice details:', error);
+      console.error('Error fetching invoice:', error);
     } finally {
       setIsLoading(false);
     }
@@ -90,34 +78,14 @@ export const InvoiceDetailPage = () => {
   };
 
   const handleSave = async () => {
-    if (!Invoice || !Id) return;
-    
     try {
       setIsSaving(true);
-      
-      // Update header
-      const { error: HeaderError } = await supabase
-        .from('invoice_headers')
-        .update(Invoice)
-        .eq('id', Id);
-
-      if (HeaderError) throw HeaderError;
-
-      // Update lines
-      for (const line of InvoiceLines) {
-        const { error: LineError } = await supabase
-          .from('invoice_lines')
-          .update(line)
-          .eq('header_id', Id)
-          .eq('lineno', line.lineno);
-
-        if (LineError) throw LineError;
-      }
-
-      alert('Changes saved successfully!');
+      await api.updateInvoice(Id!, {
+        Invoice,
+        InvoiceLines
+      });
     } catch (error) {
-      console.error('Error saving changes:', error);
-      alert('Error saving changes. Please try again.');
+      console.error('Error saving invoice:', error);
     } finally {
       setIsSaving(false);
     }
@@ -140,6 +108,24 @@ export const InvoiceDetailPage = () => {
       vatamount: 0,
     };
     setInvoiceLines([...InvoiceLines, newLine]);
+  };
+  
+  const handleCancelSend = async () => {
+    if (!Invoice) return;
+    try {
+      setIsSaving(true);
+      
+      const UpdatedInvoice = {...Invoice, status: 'cancelled'};
+      await api.updateInvoice(Id!, {
+        Invoice: UpdatedInvoice,
+        InvoiceLines: InvoiceLines
+      });
+      setInvoice(UpdatedInvoice);
+    } catch (error) {
+      console.error('Error updating status:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (IsLoading) {
@@ -173,7 +159,7 @@ export const InvoiceDetailPage = () => {
         <BillingSection>
           <BillingColumn>
             <InputGroup>
-              <Label>Datum fatkure</Label>
+              <Label>Datum fakture</Label>
               <Input
                 type="date"
                 value={Invoice.invoicedate}
@@ -217,7 +203,29 @@ export const InvoiceDetailPage = () => {
           </BillingColumn>
 
           <BillingColumn align="right">
-            <SectionTitle>Preduzeće:</SectionTitle>
+            <LargeStatusBadge 
+              status={
+                Invoice.status === 'new' 
+                  ? 'pending' 
+                  : Invoice.status === 'cancelled' 
+                    ? 'cancelled' 
+                    : 'processed'
+              }
+            >
+              {Invoice.status === 'new' 
+                ? 'Novo' 
+                : Invoice.status === 'ready' 
+                  ? 'Za slanje' 
+                  : Invoice.status === 'cancelled' 
+                    ? 'Poništeno'
+                    : ''}
+            </LargeStatusBadge>
+            {Invoice.status === 'ready' && (
+              <button onClick={handleCancelSend} style={{ marginLeft: '1rem', background: 'transparent', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: '1rem' }}>
+                <FiX /> Poništi
+              </button>
+            )}
+            <SectionTitle style={{ marginTop: '1rem' }}>Preduzeće:</SectionTitle>
             <CompanyInfo>
               <p className="company-name">RIZOTO BAR DOO</p>
               <p>Svetozara Markovića 36</p>
@@ -367,9 +375,23 @@ export const InvoiceDetailPage = () => {
             <span>{(Invoice.totalamount * 1.05)?.toFixed(2) || '0.00'}</span>
           </TotalRow>
           
-          <SaveButton onClick={handleSave} disabled={IsSaving} fullWidth>
-            {IsSaving ? 'Čuvanje...' : 'Sačuvaj promene'}
-          </SaveButton>
+          <div className="flex flex-col gap-2">
+            <SaveButton 
+              onClick={async () => {
+                // await handleSave();
+                const UpdatedInvoice = {...Invoice, status: 'ready'};
+                await api.updateInvoice(Id!, {
+                  Invoice: UpdatedInvoice,
+                  InvoiceLines: InvoiceLines
+                });
+                setInvoice(UpdatedInvoice);
+              }} 
+              disabled={IsSaving} 
+              fullWidth
+            >
+              Potvrdi za slanje
+            </SaveButton>
+          </div>
         </TotalsSection>
       </InvoiceContainer>
     </PageContainer>
