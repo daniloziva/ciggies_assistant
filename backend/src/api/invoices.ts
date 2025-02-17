@@ -7,8 +7,6 @@ const router = Router();
 const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_ANON_KEY!;
 
-console.log(supabaseUrl);
-
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   db: { schema: 'public' }
 });

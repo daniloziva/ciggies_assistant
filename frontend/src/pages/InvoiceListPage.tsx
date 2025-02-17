@@ -27,6 +27,10 @@ export const InvoiceListPage = () => {
   const [IsLoading, setIsLoading] = useState(true);
   const Navigate = useNavigate();
   const [ActiveMenu, setActiveMenu] = useState<string | null>(null);
+  const [IsProcessing, setIsProcessing] = useState(false);
+
+  // Add file input reference
+  const FileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchInvoices();
@@ -68,6 +72,53 @@ export const InvoiceListPage = () => {
       fetchInvoices();
     } catch (error) {
       console.error('Error deleting invoice:', error);
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsProcessing(true);
+
+      // Convert file to base64
+      const base64String = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          // Remove data:application/pdf;base64, from the string
+          resolve(base64.split(',')[1]);
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // First, extract data from the PDF
+      const extractResponse = await api.extractInvoice(base64String);
+      
+      if (!extractResponse.success) {
+        throw new Error('Failed to extract invoice data');
+      }
+
+      // Then, send the extracted text to OpenAI for processing
+      const chatResponse = await api.processInvoice(extractResponse.text);
+      
+      if (!chatResponse.success) {
+        throw new Error('Failed to process invoice data');
+      }
+
+      // Refresh the invoices list after successful processing
+      await fetchInvoices();
+
+    } catch (error) {
+      console.error('Error processing invoice:', error);
+      alert('Error processing invoice. Please try again.');
+    } finally {
+      setIsProcessing(false);
+      // Reset file input
+      if (FileInputRef.current) {
+        FileInputRef.current.value = '';
+      }
     }
   };
 
@@ -183,12 +234,30 @@ export const InvoiceListPage = () => {
         justifyContent: 'space-between', 
         alignItems: 'center' 
       }}>
+        <input
+          type="file"
+          ref={FileInputRef}
+          onChange={handleFileUpload}
+          accept="application/pdf"
+          style={{ display: 'none' }}
+        />
+        
         <SaveButton 
-          onClick={() => {/* handle upload */}}
+          onClick={() => FileInputRef.current?.click()}
           style={{ width: '200px' }}
+          disabled={IsProcessing}
         >
-          <FiPlus style={{ marginRight: '0.5rem' }} />
-          Dodaj novu fakturu
+          {IsProcessing ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+              Obrađujem...
+            </>
+          ) : (
+            <>
+              <FiPlus style={{ marginRight: '0.5rem' }} />
+              Dodaj novu fakturu
+            </>
+          )}
         </SaveButton>
 
         <SaveButton 
