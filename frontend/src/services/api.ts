@@ -47,12 +47,12 @@ export const api = {
   },
 
   processInvoice: async (extractedText: string) => {
-    const response = await fetch(`${API_BASE_URL}/openai/chat`, {
+    const response = await fetch(`${API_BASE_URL}/openai/getJson`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ text: extractedText }),
+      body: JSON.stringify({ document: extractedText }),
     });
     
     if (!response.ok) throw new Error('Failed to process invoice data');

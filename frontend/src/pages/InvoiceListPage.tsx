@@ -87,24 +87,17 @@ export const InvoiceListPage = () => {
         const reader = new FileReader();
         reader.onloadend = () => {
           const base64 = reader.result as string;
-          // Remove data:application/pdf;base64, from the string
+          // Remove data:[content-type];base64, from the string
           resolve(base64.split(',')[1]);
         };
         reader.readAsDataURL(file);
       });
 
       // First, extract data from the PDF
-      const extractResponse = await api.extractInvoice(base64String);
+      const extractResponse = await api.processInvoice(base64String);
       
       if (!extractResponse.success) {
         throw new Error('Failed to extract invoice data');
-      }
-
-      // Then, send the extracted text to OpenAI for processing
-      const chatResponse = await api.processInvoice(extractResponse.text);
-      
-      if (!chatResponse.success) {
-        throw new Error('Failed to process invoice data');
       }
 
       // Refresh the invoices list after successful processing
