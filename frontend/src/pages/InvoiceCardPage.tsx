@@ -99,7 +99,7 @@ export const InvoiceCardPage = () => {
       description: '',
       price: 0,
       qty: 1,
-      discout: 0,
+      discount: 0,
       lineamount: 0,
       uom: '',
       vatpercent: 10,
@@ -310,8 +310,8 @@ export const InvoiceCardPage = () => {
                     <InputGroup>
                       <Input
                         type="number"
-                        value={line.discout}
-                        onChange={(e) => handleLineChange(index, 'discout', parseFloat(e.target.value))}
+                        value={line.discount}
+                        onChange={(e) => handleLineChange(index, 'discount', parseFloat(e.target.value))}
                         className="text-right"
                         placeholder="0"
                       />

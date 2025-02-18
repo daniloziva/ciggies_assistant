@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { InvoiceHeader } from '../../../backend/src/types/invoice';
@@ -28,12 +28,27 @@ export const InvoiceListPage = () => {
   const Navigate = useNavigate();
   const [ActiveMenu, setActiveMenu] = useState<string | null>(null);
   const [IsProcessing, setIsProcessing] = useState(false);
+  const MenuRef = useRef<HTMLDivElement>(null);
 
   // Add file input reference
   const FileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchInvoices();
+  }, []);
+
+  // Add click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (MenuRef.current && !MenuRef.current.contains(event.target as Node)) {
+        setActiveMenu(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   const fetchInvoices = async () => {
@@ -134,8 +149,7 @@ export const InvoiceListPage = () => {
             <thead>
               <TableHeaderRow>
                 <ListTableHeader style={{ width: '48px' }}></ListTableHeader>
-                <ListTableHeader>Broj računa</ListTableHeader>
-                <ListTableHeader>Broj dobavljača</ListTableHeader>
+                <ListTableHeader>Broj fakture</ListTableHeader>
                 <ListTableHeader>Naziv dobavljača</ListTableHeader>
                 <ListTableHeader>Matični broj</ListTableHeader>
                 <ListTableHeader>PIB</ListTableHeader>
@@ -145,13 +159,13 @@ export const InvoiceListPage = () => {
               </TableHeaderRow>
             </thead>
             <tbody>
-              {Invoices.map((Invoice) => (
+              {Invoices.map((Invoice, index) => (
                 <ListTableRow 
                   key={Invoice.id}
                   onClick={() => Navigate(`/invoices/${Invoice.id}`)}
                 >
                   <ListTableCell style={{ width: '48px' }}>
-                    <MenuContainer>
+                    <MenuContainer ref={MenuRef}>
                       <MenuButton 
                         onClick={(e) => {
                           e.stopPropagation();
@@ -161,7 +175,7 @@ export const InvoiceListPage = () => {
                         <FiMoreVertical />
                       </MenuButton>
                       {ActiveMenu === Invoice.id && (
-                        <MenuDropdown>
+                        <MenuDropdown isLastRow={index === Invoices.length - 1}>
                           <MenuItem 
                             onClick={(e) => {
                               e.stopPropagation();
@@ -175,7 +189,6 @@ export const InvoiceListPage = () => {
                     </MenuContainer>
                   </ListTableCell>
                   <ListTableCell>{Invoice.invoicenumber}</ListTableCell>
-                  <ListTableCell>{Invoice.vendorno}</ListTableCell>
                   <ListTableCell>{Invoice.vendorname}</ListTableCell>
                   <ListTableCell>{Invoice.registrationno}</ListTableCell>
                   <ListTableCell>{Invoice.vatno}</ListTableCell>

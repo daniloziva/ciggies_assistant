@@ -59,7 +59,9 @@ async function getJSONFromOpenAI(prompt: any){
             messages: [
                 {
                     role: "system", content: `You are an assistant that can help with invoices that returns responses in JSON format. Answer nothing but the JSON response.
-                    You will receive a result of a scan of an invoice from OpenAI document intelligence resource. The JSON properties should match the names of the field that follow.
+                    You will receive a result of a scan of an invoice from OpenAI document intelligence resource. It will first contain the summary of the OCR scan, then below will be the table details. 
+                    Use the summary to extract the header data. The table details will be in the format of "Header at row X column Y is: Z. Value at row A column B is: C." etc.
+                    The JSON properties should match the names of the field that follow. Rižoto doo( vat 21866571 and reg no 113436605) is my company name, disregard this from the analysis. The invoice number should have "faktura" or "fakturu" next to it.
                     You will then extract the invoice data and return it in JSON format. It should contain header with property named "header" and inside it data:vendorName, registrationNo, vatNo, invoicenumber, invoiceDate, totalAmount, totalVatAmount, totalAmountWithVat.
                     Line data in an array inside of "lines". The line data I am insterested in is: description, itemNo, qty, uom, unitPrice, discount, vatpercent, vatamount, lineamount.
                     If any of the data is not available, return null. Return a clean JSON object in plain text. Dates should be in the format YYYY-MM-DD. Decimal separator should be a dot.
@@ -197,9 +199,10 @@ const getLayoutAnalysisResult = async (operationLocation: any, key: any) => {
                         }
                     }
 
-                    console.log(tableDetails);
+                    console.log('The content summary is: ' + response.data.analyzeResult.content);
+                    console.log('Table details is ' + tableDetails);
 
-                    return (tableDetails); // Exit the loop if analysis is complete
+                    return (response.data.analyzeResult.content + ' ' +tableDetails); // Exit the loop if analysis is complete
                 } else {
                     console.log('Analysis still running. Waiting...');
                     await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds before polling again

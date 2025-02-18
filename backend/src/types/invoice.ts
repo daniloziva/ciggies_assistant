@@ -19,7 +19,7 @@ export interface InvoiceLine {
   qty: number;
   price: number;
   lineamount: number;
-  discout: number;
+  discount: number;
   uom: string;
   vatpercent: number;
   no_mapped: string | null;

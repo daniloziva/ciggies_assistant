@@ -410,15 +410,16 @@ export const MenuButton = styled.button`
   }
 `;
 
-export const MenuDropdown = styled.div`
+export const MenuDropdown = styled.div<{ isLastRow?: boolean }>`
   position: absolute;
   left: 0;
-  top: 100%;
+  ${props => props.isLastRow ? 'bottom: 100%;' : 'top: 100%;'}
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 0.375rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  z-index: 10;
+  z-index: 50;
+  min-width: 120px;
 `;
 
 export const MenuItem = styled.button`
